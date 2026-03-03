@@ -116,9 +116,7 @@ ytm setup
 The setup wizard has two modes:
 
 **Automatic (preferred):** If `[yt_dlp].cookies_file` is set, setup first tries that Netscape cookies file (same format as `yt-dlp --cookies FILE`). If not configured or invalid, it scans installed browsers (Helium, Chrome, Chromium, Brave, Firefox, Edge, Vivaldi, Opera) for YouTube Music cookies.
-**Automatic (preferred):** If `[yt_dlp].cookies_file` is set, setup first tries that Netscape cookies file (same format as `yt-dlp --cookies FILE`). If not configured or invalid, it scans installed browsers (Helium, Chrome, Chromium, Brave, Firefox, Edge, Vivaldi, Opera) for YouTube Music cookies.
 
-**Manual fallback:** If cookie-file + auto-detection fail (e.g. expired cookies, unsupported browser), the wizard walks you through pasting raw request headers:
 **Manual fallback:** If cookie-file + auto-detection fail (e.g. expired cookies, unsupported browser), the wizard walks you through pasting raw request headers:
 
 1. Open [music.youtube.com](https://music.youtube.com) in your browser

@@ -53,7 +53,9 @@ def _parse_runtime_token(runtime_spec: str) -> tuple[str, dict] | None:
     return runtime_name, {}
 
 
-def normalize_js_runtimes(value: str | list[str] | dict[str, dict] | None) -> dict[str, dict] | None:
+def normalize_js_runtimes(
+    value: str | list[str] | dict[str, dict] | None,
+) -> dict[str, dict] | None:
     """Return yt-dlp compatible js_runtimes dict.
 
     yt-dlp Python API expects: {"runtime": {<config>}}

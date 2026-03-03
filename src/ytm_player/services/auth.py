@@ -263,7 +263,6 @@ class AuthManager:
             logger.warning("Failed to load cookies file %s: %s", cookies_file, exc)
             return False
 
-
         try:
             mode = cookies_file.stat().st_mode
             if mode & 0o077:
@@ -275,9 +274,7 @@ class AuthManager:
         except OSError:
             logger.debug("Could not stat cookies file permissions: %s", cookies_file, exc_info=True)
         yt_cookies = [
-            c
-            for c in jar
-            if c.domain == ".youtube.com" or c.domain.endswith(".youtube.com")
+            c for c in jar if c.domain == ".youtube.com" or c.domain.endswith(".youtube.com")
         ]
         if not yt_cookies:
             logger.warning("No youtube.com cookies found in %s", cookies_file)

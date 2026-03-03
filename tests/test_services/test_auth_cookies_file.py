@@ -10,7 +10,7 @@ def _write_netscape_cookie_file(path: Path, domain: str = ".youtube.com") -> Non
         "\n".join(
             [
                 "# Netscape HTTP Cookie File",
-                f"{domain}\t{"TRUE" if domain.startswith(".") else "FALSE"}\t/\tTRUE\t2147483647\tSAPISID\tabc123",
+                f"{domain}\t{'TRUE' if domain.startswith('.') else 'FALSE'}\t/\tTRUE\t2147483647\tSAPISID\tabc123",
             ]
         )
         + "\n"
@@ -28,7 +28,9 @@ def test_extract_from_cookies_file_rejects_non_youtube_suffix(tmp_path):
     assert not auth_file.exists()
 
 
-def test_refresh_from_cookies_file_restores_previous_auth_on_validate_failure(tmp_path, monkeypatch):
+def test_refresh_from_cookies_file_restores_previous_auth_on_validate_failure(
+    tmp_path, monkeypatch
+):
     cookies_file = tmp_path / "cookies.txt"
     _write_netscape_cookie_file(cookies_file)
 
