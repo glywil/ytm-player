@@ -2,7 +2,7 @@
 
 A full-featured YouTube Music player for the terminal. Browse your library, search, queue tracks, and control playback — all from a TUI with vim-style keybindings. Runs on Linux, macOS, and Windows.
 
-![ytm-player screenshot](screenshot-v4.png)
+![ytm-player screenshot](https://raw.githubusercontent.com/peternaame-boop/ytm-player/master/screenshot-v4.png)
 
 ## Features
 
@@ -59,6 +59,28 @@ choco install mpv
 ```
 
 ### 2. Install ytm-player
+
+#### Arch Linux / CachyOS / EndeavourOS / Manjaro (AUR)
+
+```bash
+yay -S ytm-player-git
+```
+
+Or with any other AUR helper. Package: [ytm-player-git](https://aur.archlinux.org/packages/ytm-player-git)
+
+#### PyPI (all platforms)
+
+```bash
+pip install ytm-player
+```
+
+Or with [pipx](https://pipx.pypa.io/) for isolated installs:
+
+```bash
+pipx install ytm-player
+```
+
+#### From source
 
 ```bash
 git clone https://github.com/peternaame-boop/ytm-player.git
@@ -320,7 +342,7 @@ playback_bar_bg = "#1a1a1a"
 
 Import your Spotify playlists into YouTube Music — from the TUI or CLI.
 
-![Spotify import popup](screenshot-spotify-import.png)
+![Spotify import popup](https://raw.githubusercontent.com/peternaame-boop/ytm-player/master/screenshot-spotify-import.png)
 
 ### How it works
 
@@ -465,16 +487,16 @@ MIT — see [LICENSE](LICENSE).
 
 ## Changelog
 
-### v1.2.5 (2026-03-02)
+### v1.2.9 (2026-03-02)
+
+**New**
+- Published to PyPI — install with `pip install ytm-player` or `pipx install ytm-player`
 
 **Bug Fixes**
-- Fixed track auto-advance failing after first song ends — async tasks dispatched from mpv's end-file callback could be garbage-collected before executing (the classic `asyncio.create_task` footgun); player now holds strong references to all dispatched tasks
-- Fixed end-file reason not being filtered — stream errors (expired URLs, network drops) were treated as natural track endings, causing unexpected auto-advance; only EOF now triggers queue advancement, errors dispatch separately
-- Fixed duplicate end-file dispatch when `_current_track` was already None — added guard to prevent spurious TRACK_END events on an idle player
-- Fixed autoplay/radio never triggering at end of queue — `_on_end_file` cleared `player.current_track` before the callback ran, so the autoplay branch always saw None; ended track info is now passed through the event
-- Fixed listen history not logged for naturally ended tracks (same `current_track = None` race)
-- Fixed shuffle state corrupting queue after clear — `clear()` reset `_shuffle_order` but left `_shuffle = True`, causing `add_multiple()` to do piecemeal random insertion into an empty list instead of a proper full shuffle build
-- Fixed `jump_to()` not syncing `_current_index` fallback when shuffle is on — if `_shuffle_position` ever went out of range, `_real_index()` fell back to `-1`, returning None for all queue operations
+- Fixed track auto-advance stopping after song ends — three root causes: mpv end-file reason read from wrong event object, event loop reference permanently lost under thread race condition, and `CancelledError` not caught in track-end handler
+- Fixed RTL text (Arabic/Hebrew) display — removed manual word-reordering that double-reversed text on terminals with native BiDi support; added Unicode directional isolation to prevent RTL titles from displacing playback bar controls
+- Fixed shuffle state corrupting queue after clear, and `jump_to()` desyncing the current index when shuffle is on
+- Fixed column resize triggering sort, and Title column not staying at user-set width
 
 ### v1.2.4 (2026-02-17)
 

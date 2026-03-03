@@ -72,6 +72,10 @@ class _TrackInfo(Widget):
             artist_w = min(len(self.artist), max_w // 3)
             album_w = max_w - title_w - artist_w - 8
 
+            # LRI (U+2066) ... PDI (U+2069) isolates the track info so
+            # RTL titles don't pull adjacent widgets (volume, etc.) into
+            # the RTL BiDi context.
+            result.append("\u2066")
             result.append(truncate(self.title, title_w), style=f"bold {theme.foreground}")
             if self.artist:
                 result.append(" \u2014 ", style=theme.muted_text)
@@ -79,6 +83,7 @@ class _TrackInfo(Widget):
             if self.album:
                 result.append(" \u2014 ", style=theme.muted_text)
                 result.append(truncate(self.album, max(0, album_w)), style=theme.muted_text)
+            result.append("\u2069")
         else:
             result.append("No track playing", style=theme.muted_text)
 
