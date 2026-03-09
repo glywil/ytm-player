@@ -472,7 +472,16 @@ For playlists over 100 tracks, set up the API credentials.
 
 ```
 src/ytm_player/
-├── app.py              # Main Textual application
+├── app/                # Main Textual application (mixin package)
+│   ├── _app.py         #   Class def, __init__, compose, lifecycle
+│   ├── _playback.py    #   play_track, player events, history, download
+│   ├── _keys.py        #   Key handling and action dispatch
+│   ├── _sidebar.py     #   Sidebar toggling and playlist sidebar events
+│   ├── _navigation.py  #   Page navigation and nav stack
+│   ├── _ipc.py         #   IPC command handling for CLI
+│   ├── _track_actions.py  # Track selection, actions popup, radio
+│   ├── _session.py     #   Session save/restore
+│   └── _mpris.py       #   MPRIS/media key callbacks
 ├── cli.py              # Click CLI entry point
 ├── ipc.py              # Unix socket IPC for CLI↔TUI communication
 ├── config/             # Settings, keymap, theme (TOML)
