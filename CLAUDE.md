@@ -10,7 +10,7 @@ ytm-player is a YouTube Music TUI client built with Python 3.12+ and [Textual](h
 
 ```bash
 # Install (editable, all features + dev tools)
-pip install -e ".[spotify,mpris,images,discord,lastfm,dev]"
+pip install -e ".[spotify,mpris,discord,lastfm,transliteration,dev]"
 
 # Run the TUI
 ytm
@@ -37,11 +37,11 @@ System dependency: `mpv` must be installed (`sudo pacman -S mpv` on Arch).
 
 ## Architecture
 
-**Entry point:** `ytm` CLI command → `src/ytm_player/cli.py` (Click). Running `ytm` with no args launches the Textual TUI app (`app.py`). Subcommands (`ytm search`, `ytm play`, etc.) communicate with a running TUI instance via Unix socket IPC (`ipc.py`).
+**Entry point:** `ytm` CLI command → `src/ytm_player/cli.py` (Click). Running `ytm` with no args launches the Textual TUI app (`app/` package — split into mixins). Subcommands (`ytm search`, `ytm play`, etc.) communicate with a running TUI instance via Unix socket IPC (`ipc.py`).
 
 **Three-layer structure:**
 
-- **`services/`** — Backend singletons: `Player` (mpv wrapper), `QueueManager` (shuffle/repeat), `StreamResolver` (yt-dlp), `YTMusicService` (ytmusicapi), `CacheManager` (LRU audio cache), `HistoryManager` (SQLite via aiosqlite), `AuthManager` (browser cookie extraction), `lrclib` (LRCLIB.net lyrics fallback). Optional: `MPRISService`, `DiscordRPC`, `LastFMService`.
+- **`services/`** — Backend singletons: `Player` (mpv wrapper), `QueueManager` (shuffle/repeat), `StreamResolver` (yt-dlp), `YTMusicService` (ytmusicapi), `CacheManager` (LRU audio cache), `HistoryManager` (SQLite via aiosqlite), `AuthManager` (browser cookie extraction), `lrclib` (LRCLIB.net lyrics fallback), `DownloadService` (offline downloads), `SpotifyImport`. Platform-specific: `MPRISService` (Linux D-Bus), `MacOSMediaService` + `MacOSEventTapService` (macOS), `MediaKeysService` (Windows pynput). Optional: `DiscordRPC`, `LastFMService`.
 - **`ui/`** — Textual widgets: `pages/` (library, search, browse, context, queue, etc.), `sidebars/` (playlist list, synced lyrics), `popups/` (modals), `widgets/` (track table, progress bar, album art). Styling via `theme.py` with CSS variables.
 - **`config/`** — `Settings` dataclass loaded from `~/.config/ytm-player/config.toml`. `KeyMap` system supports multi-key vim sequences and count prefixes. All paths centralized in `paths.py`.
 
@@ -52,7 +52,7 @@ System dependency: `mpv` must be installed (`sudo pacman -S mpv` on Arch).
 - **Track format:** All services use a standardized track dict with keys: `video_id`, `title`, `artist`, `artists` (list of dicts with `name`/`id`), `album`, `album_id`, `duration` (seconds, int or None), `thumbnail_url`, `is_video`. The `normalize_tracks()` function in `utils/formatting.py` converts inconsistent ytmusicapi response shapes into this format — always use it when ingesting API data.
 - **Session persistence:** Volume, queue contents, shuffle/repeat state saved to `session.json` and restored on startup.
 - **Prefetching:** Next track's stream URL is resolved in background for instant skip.
-- **Page navigation:** `app.py` manages a nav stack (max 20) with `_push_page()`/`_pop_page()`. Each page widget implements `handle_action(action, count)` for vim-style keybinding dispatch.
+- **Page navigation:** `app/_navigation.py` manages a nav stack (max 20) via `navigate_to()`. Each page widget implements `handle_action(action, count)` for vim-style keybinding dispatch.
 - **LC_NUMERIC quirk:** `cli.py` forces `LC_NUMERIC=C` at import time — mpv segfaults without it. Don't remove this.
 
 ## Pre-commit Checklist
@@ -100,6 +100,9 @@ rm -rf /tmp/ytm-player-aur
 
 AUR package URL: https://aur.archlinux.org/packages/ytm-player-git
 
-## Future Plans
+## Distribution
 
-- **PyPI publishing** — planned but not yet set up. The project already has a proper `pyproject.toml` with hatchling, so `pipx install ytm-player` is the target. Distribution is currently AUR + GitHub only.
+Published on three channels:
+- **PyPI:** `pip install ytm-player` — https://pypi.org/project/ytm-player/
+- **AUR:** `yay -S ytm-player-git` — https://aur.archlinux.org/packages/ytm-player-git
+- **NixOS:** `flake.nix` with `ytm-player` and `ytm-player-full` packages
