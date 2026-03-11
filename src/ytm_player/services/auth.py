@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import sys
+import tempfile
 from http.cookiejar import MozillaCookieJar
 from pathlib import Path
 
@@ -250,12 +251,14 @@ class AuthManager:
             try:
                 self._auth_file.write_bytes(backup)
                 secure_chmod(self._auth_file, SECURE_FILE_MODE)
-                logger.info("Restored previous auth after cookies file validation failure")
+                logger.debug("Restored previous auth after cookies file validation failure")
             except OSError:
                 logger.warning("Failed to restore previous auth file", exc_info=True)
         return False
 
-    def _extract_and_save_from_cookies_file(self, cookies_file: Path, interactive: bool = False) -> bool:
+    def _extract_and_save_from_cookies_file(
+        self, cookies_file: Path, interactive: bool = False
+    ) -> bool:
         """Extract YouTube cookies from a Netscape cookies.txt file and write auth.json."""
         if not cookies_file.exists():
             logger.warning("Cookies file does not exist: %s", cookies_file)
@@ -348,16 +351,14 @@ class AuthManager:
             except (OSError, json.JSONDecodeError, ValueError):
                 pass
         self._config_dir.mkdir(parents=True, exist_ok=True)
-        valid_accounts: list[tuple[int, str]] = []  # (authuser_index, accountName)
+        valid_accounts: list[tuple[int, str, str]] = []  # (authuser_index, accountName, handle)
         for authuser in authuser_indices:
             headers = {**base_headers, "x-goog-authuser": str(authuser)}
-            fd = os.open(
-                str(self._auth_file), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, SECURE_FILE_MODE
-            )
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                json.dump(headers, f, ensure_ascii=True, indent=4, sort_keys=True)
             try:
-                ytm = YTMusic(str(self._auth_file))
+                fd, tmp_path = tempfile.mkstemp(suffix=".json", dir=str(self._config_dir))
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    json.dump(headers, f, ensure_ascii=True, indent=4, sort_keys=True)
+                ytm = YTMusic(tmp_path)
                 account = ytm.get_account_info()
                 name = account.get("accountName")
                 handle = account.get("channelHandle") or ""
@@ -365,6 +366,11 @@ class AuthManager:
                     valid_accounts.append((authuser, name, handle))
             except Exception:
                 logger.debug("x-goog-authuser=%d did not work, skipping", authuser)
+            finally:
+                try:
+                    os.unlink(tmp_path)
+                except (OSError, UnboundLocalError):
+                    pass
 
         if not valid_accounts:
             logger.warning(
@@ -403,8 +409,11 @@ class AuthManager:
                     choice = int(raw) - 1
                     if 0 <= choice < len(valid_accounts):
                         break
-                except (ValueError, EOFError, KeyboardInterrupt):
+                except ValueError:
                     pass
+                except (EOFError, KeyboardInterrupt):
+                    print("\n  Cancelled.")
+                    return False
                 print(f"  Please enter a number between 1 and {len(valid_accounts)}.")
             chosen_index, chosen_name, chosen_handle = valid_accounts[choice]
             print(f"  Selected: {_label(chosen_index, chosen_name, chosen_handle)}")
@@ -416,13 +425,15 @@ class AuthManager:
                 valid_accounts[0],
             )
             chosen_index, chosen_name, chosen_handle = preferred
-            logger.info("Auto-refresh: using account index %d (%s)", chosen_index, _label(chosen_index, chosen_name, chosen_handle))
+            logger.debug(
+                "Auto-refresh: using account index %d (%s)",
+                chosen_index,
+                _label(chosen_index, chosen_name, chosen_handle),
+            )
 
         # Write the final auth file for the chosen account.
         headers = {**base_headers, "x-goog-authuser": str(chosen_index)}
-        fd = os.open(
-            str(self._auth_file), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, SECURE_FILE_MODE
-        )
+        fd = os.open(str(self._auth_file), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, SECURE_FILE_MODE)
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(headers, f, ensure_ascii=True, indent=4, sort_keys=True)
         return True
