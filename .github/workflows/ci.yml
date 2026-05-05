@@ -47,19 +47,5 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      # mpv install is best-effort. services/player.py tolerates a missing
-      # libmpv at module-import time by substituting a stub, so test
-      # discovery works on any runner. Where mpv IS available, the real
-      # python-mpv module loads and the existing tests exercise it.
-      - name: Install mpv (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y mpv libmpv-dev
-      - name: Install mpv (macOS)
-        if: runner.os == 'macOS'
-        run: brew install mpv || true
-      - name: Install mpv (Windows)
-        if: runner.os == 'Windows'
-        run: choco install mpv -y || exit 0
-        shell: pwsh
       - run: pip install -e ".[dev]"
       - run: pytest --cov=ytm_player --cov-report=term-missing
